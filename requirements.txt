@@ -3,3 +3,5 @@ pandas
 ta
 groq
 gspread
+python-binance
+google-auth
