@@ -55,11 +55,11 @@
 ├── scheduler.py          # Runs analysis every 4 hours
 ├── requirements.txt      # Dependencies
 └── .env.example          # Required environment variables
-## Environment Variables
+## Запуск
 
-All secrets are stored as environment variables. See `.env.example` for the full list.
+Всі секрети зберігаються як змінні середовища.
+Дивись `.env.example` для повного списку.
 
-## Status
+## Статус
 
-Deployed and running on Railway. The bot sends analysis reports to Telegram
-every 4 hours automatically.
+Працює на Railway. Звіти надходять у Telegram кожні 4 години.
