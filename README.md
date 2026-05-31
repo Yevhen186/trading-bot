@@ -3,7 +3,7 @@
 Навчальний проєкт. Бот аналізує ринок ETH/USDT кожні 4 години
 і надсилає звіт у Telegram. Розгорнутий на Railway і працює 24/7.
 
-![Приклад звіту в Telegram]<img width="1749" height="1027" alt="image" src="https://github.com/user-attachments/assets/49e18731-c3ce-43b6-853e-8018f8e74f08" />
+![Приклад звіту в Telegram]<img width="1742" height="1027" alt="image" src="https://github.com/user-attachments/assets/9ab42805-11cc-4441-a2f5-b349270d0ff0" />
 
 
 ## Що це і навіщо
@@ -47,18 +47,20 @@
 - Railway (хмарний деплой)
 
 ## Структура файлів
-├── orchestrator.py       # Main coordinator, voting logic
-├── ta_agent_v2.py        # Technical analysis agent
-├── news_agent.py         # News sentiment agent
-├── execution_agent.py    # Order execution + Google Sheets
-├── telegram_notify.py    # Telegram notifications
-├── scheduler.py          # Runs analysis every 4 hours
-├── requirements.txt      # Dependencies
-└── .env.example          # Required environment variables
+
+- orchestrator.py — головний координатор і логіка голосування
+- ta_agent_v2.py — технічний аналіз
+- news_agent.py — аналіз новин і настрою ринку
+- execution_agent.py — виконання ордерів і запис в Sheets
+- telegram_notify.py — відправка звітів в Telegram
+- scheduler.py — запуск аналізу кожні 4 години
+- requirements.txt — залежності
+- .env.example — список необхідних змінних середовища
+
 ## Запуск
 
 Всі секрети зберігаються як змінні середовища.
-Дивись `.env.example` для повного списку.
+Дивись .env.example для повного списку.
 
 ## Статус
 
