@@ -16,7 +16,7 @@ API_KEY = os.getenv("BINANCE_TESTNET_API_KEY")
 API_SECRET = os.getenv("BINANCE_TESTNET_API_SECRET")
 SYMBOL = "ETHUSDT"
 
-SPREADSHEET_ID = "1MLwbGYgqMcyfjyVhYrneiHTlpWoTZU1BkzfXh6tuKeo"
+SPREADSHEET_ID = os.getenv("SPREADSHEET_ID")
 
 MAX_OPEN_TRADES = 2
 MAX_TRADE_USDT = 15.0
@@ -99,19 +99,19 @@ def save_open_trade(trade: dict):
         logger.error(f"Помилка збереження угоди в Sheets: {e}")
 
 
-# --- Закрити угоду в Google Sheets (оновити рядок) ---
+# --- Закрити угоду в Google Sheets ---
 def close_trade_in_sheet(order_id, exit_price: float, reason: str, pnl: float):
     try:
         sheet = get_sheet()
         rows = sheet.get_all_values()
 
-        for i, row in enumerate(rows[1:], start=2):  # пропускаємо заголовок
+        for i, row in enumerate(rows[1:], start=2):
             if str(row[0]) == str(order_id):
-                sheet.update_cell(i, 9, exit_price)                      # exit_price
-                sheet.update_cell(i, 10, datetime.utcnow().isoformat())   # closed_at
-                sheet.update_cell(i, 11, reason)                          # close_reason
-                sheet.update_cell(i, 12, pnl)                             # pnl_usdt
-                sheet.update_cell(i, 13, "CLOSED")                        # status
+                sheet.update_cell(i, 9, exit_price)
+                sheet.update_cell(i, 10, datetime.utcnow().isoformat())
+                sheet.update_cell(i, 11, reason)
+                sheet.update_cell(i, 12, pnl)
+                sheet.update_cell(i, 13, "CLOSED")
                 logger.info(f"Угода {order_id} закрита в Sheets: {reason} | PnL={pnl}")
                 return
 
