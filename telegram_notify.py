@@ -1,17 +1,15 @@
 """
 telegram_notify.py — Telegram нотифікації для Trading Bot
 Імпортується в orchestrator.py
-
-Використання:
-    from telegram_notify import send_signal, send_error
 """
 
+import os
 import requests
 from datetime import datetime
 
 # ─────────────────────────────────────────────
-TELEGRAM_TOKEN  = "8781628158:AAHgEEITjJlVgCZRiISbPeKgSgwQp5orYXY"
-TELEGRAM_CHAT_ID = "457989552"
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
+TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 SYMBOL = "ETHUSDT"
 # ─────────────────────────────────────────────
 
@@ -35,27 +33,23 @@ def send_message(text: str) -> bool:
 
 
 def send_signal(result: dict) -> bool:
-    """
-    Формує і відправляє повний звіт оркестратора.
-    result — dict який повертає run_orchestrator()
-    """
-    decision  = result.get("decision", "WAIT")
-    reason    = result.get("reason", "")
-    trade     = result.get("trade", {})
-    summary   = result.get("summary", "")
-    signals   = result.get("signals", {})
-    ts        = result.get("timestamp", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    """Формує і відправляє повний звіт оркестратора."""
+    decision = result.get("decision", "WAIT")
+    reason   = result.get("reason", "")
+    trade    = result.get("trade", {})
+    summary  = result.get("summary", "")
+    signals  = result.get("signals", {})
+    ts       = result.get("timestamp", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
-    # Іконки
     d_icon = {"BUY": "🟢", "SELL": "🔴", "WAIT": "🟡"}.get(decision, "⚪")
-    
-    # Голоси агентів
+
+    # Голоси кожного агента
     votes_lines = ""
     for agent, sig in signals.items():
         s_icon = {"BUY": "🟢", "SELL": "🔴", "WAIT": "🟡"}.get(sig, "⚪")
         votes_lines += f"  {s_icon} {agent}: <b>{sig}</b>\n"
 
-    # Блок угоди
+    # Параметри угоди якщо є сигнал
     trade_block = ""
     if trade and decision in ("BUY", "SELL"):
         trade_block = (
@@ -67,7 +61,7 @@ def send_signal(result: dict) -> bool:
             f"  R:R ratio:   <code>1:{trade['rr']}</code>\n"
         )
 
-    # Аналіз (обрізаємо до 800 символів щоб не виходити за ліміт)
+    # Обрізаємо до 800 символів — ліміт Telegram
     short_summary = summary[:800] + "..." if len(summary) > 800 else summary
 
     msg = (
@@ -113,7 +107,6 @@ def send_startup() -> bool:
     return send_message(msg)
 
 
-# ─── Тест при прямому запуску ───────────────
 if __name__ == "__main__":
     print("Відправляю тестове повідомлення...")
     ok = send_message(
