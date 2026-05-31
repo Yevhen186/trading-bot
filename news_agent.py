@@ -1,9 +1,10 @@
+import os
 import requests
 from groq import Groq
 
 # ─── НАЛАШТУВАННЯ ─────────────────────────────────────────
-GROQ_API_KEY = "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"  # твій повний ключ
-NEWSDATA_API_KEY = "pub_89153c8fb8c546449659fcba5b105707"
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+NEWSDATA_API_KEY = os.getenv("NEWSDATA_API_KEY")
 NEWS_COUNT = 10
 # ──────────────────────────────────────────────────────────
 
@@ -73,7 +74,6 @@ FEAR & GREED INDEX: {fng['value']}/100 ({fng['classification']})
 
     analysis = response.choices[0].message.content
 
-    # Визначаємо настрій для Orchestrator
     if "BULLISH" in analysis.upper():
         sentiment_signal = "BULLISH"
     elif "BEARISH" in analysis.upper():
