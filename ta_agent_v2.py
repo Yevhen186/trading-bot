@@ -26,17 +26,45 @@ MIN_CONDITIONS = 3        # мінімум умов для сигналу (з 4)
 
 
 def get_candles(symbol: str, interval: str, limit: int) -> pd.DataFrame:
-    """Отримує свічки з Binance публічного API"""
-    url = "https://api.binance.com/api/v3/klines"
-    params = {"symbol": symbol, "interval": interval, "limit": limit}
+    """Отримує свічки з Binance публічного API (з резервним URL)"""
 
-    try:
-        response = requests.get(url, params=params, timeout=10)
-        response.raise_for_status()
-    except requests.exceptions.ConnectionError:
-        raise Exception("❌ Немає з'єднання з Binance. Перевір інтернет або VPN.")
-    except requests.exceptions.HTTPError as e:
-        raise Exception(f"❌ Binance API помилка: {e}")
+    urls = [
+        "https://api.binance.com/api/v3/klines",
+        "https://api1.binance.com/api/v3/klines",
+        "https://api2.binance.com/api/v3/klines",
+        "https://api3.binance.com/api/v3/klines",
+    ]
+
+    params = {"symbol": symbol, "interval": interval, "limit": limit}
+    last_error = None
+
+    for url in urls:
+        try:
+            response = requests.get(url, params=params, timeout=10)
+            response.raise_for_status()
+
+            data = response.json()
+
+            df = pd.DataFrame(data, columns=[
+                "open_time", "open", "high", "low", "close", "volume",
+                "close_time", "quote_volume", "trades",
+                "taker_buy_base", "taker_buy_quote", "ignore"
+            ])
+
+            for col in ["open", "high", "low", "close", "volume"]:
+                df[col] = pd.to_numeric(df[col])
+
+            df["open_time"] = pd.to_datetime(df["open_time"], unit="ms")
+            return df
+
+        except requests.exceptions.HTTPError as e:
+            last_error = f"❌ Binance API помилка: {e}"
+            continue
+        except requests.exceptions.ConnectionError:
+            last_error = "❌ Немає з'єднання з Binance."
+            continue
+
+    raise Exception(last_error or "❌ Всі Binance endpoints недоступні.")
 
     data = response.json()
 
