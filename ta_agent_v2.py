@@ -66,44 +66,18 @@ def get_candles(symbol: str, interval: str, limit: int) -> pd.DataFrame:
 
     raise Exception(last_error or "❌ Всі Binance endpoints недоступні.")
 
-    data = response.json()
-
-    df = pd.DataFrame(data, columns=[
-        "open_time", "open", "high", "low", "close", "volume",
-        "close_time", "quote_volume", "trades",
-        "taker_buy_base", "taker_buy_quote", "ignore"
-    ])
-
-    for col in ["open", "high", "low", "close", "volume"]:
-        df[col] = pd.to_numeric(df[col])
-
-    # Конвертуємо час для читабельності
-    df["open_time"] = pd.to_datetime(df["open_time"], unit="ms")
-
-    return df
-
 
 def calculate_indicators(df: pd.DataFrame) -> pd.DataFrame:
     """Рахує всі індикатори"""
-    # Тренд
     df["ema_fast"] = ta.trend.EMAIndicator(df["close"], window=EMA_FAST).ema_indicator()
     df["ema_slow"] = ta.trend.EMAIndicator(df["close"], window=EMA_SLOW).ema_indicator()
-
-    # Моментум
     df["rsi"] = ta.momentum.RSIIndicator(df["close"], window=RSI_PERIOD).rsi()
-
-    # Обсяг — середнє за 20 свічок
     df["volume_sma"] = df["volume"].rolling(window=VOLUME_SMA).mean()
-    df["volume_ratio"] = df["volume"] / df["volume_sma"]  # 1.3 = на 30% вище норми
-
-    # Волатильність — ATR
+    df["volume_ratio"] = df["volume"] / df["volume_sma"]
     df["atr"] = ta.volatility.AverageTrueRange(
         df["high"], df["low"], df["close"], window=ATR_PERIOD
     ).average_true_range()
-
-    # ATR у відсотках від ціни (для розуміння масштабу)
     df["atr_pct"] = (df["atr"] / df["close"]) * 100
-
     return df
 
 
@@ -117,7 +91,6 @@ def check_conditions(last: pd.Series, prev: pd.Series) -> dict:
     volume_ratio = last["volume_ratio"]
     atr_pct = last["atr_pct"]
 
-    # ── BUY умови ──
     buy_conditions = {
         "trend_up": {
             "met": ema_fast > ema_slow,
@@ -132,12 +105,11 @@ def check_conditions(last: pd.Series, prev: pd.Series) -> dict:
             "label": f"Обсяг підвищений ({volume_ratio:.2f}x від норми)"
         },
         "volatility_ok": {
-            "met": atr_pct < 3.0,  # ATR менше 3% = не екстремальна волатильність
+            "met": atr_pct < 3.0,
             "label": f"Волатильність прийнятна (ATR={atr_pct:.2f}%)"
         }
     }
 
-    # ── SELL умови ──
     sell_conditions = {
         "trend_down": {
             "met": ema_fast < ema_slow,
@@ -180,11 +152,9 @@ def generate_signal(data: dict) -> dict:
     buy_score = data["buy_score"]
     sell_score = data["sell_score"]
     price = data["price"]
-    atr = data["atr_pct"] / 100 * price  # ATR в доларах
 
-    # Розрахунок рівнів (для інформації)
-    stop_loss = round(price * 0.985, 2)   # -1.5%
-    take_profit = round(price * 1.03, 2)  # +3.0%
+    stop_loss = round(price * 0.985, 2)
+    take_profit = round(price * 1.03, 2)
 
     if buy_score >= MIN_CONDITIONS and buy_score > sell_score:
         signal = "✅ BUY"
@@ -223,10 +193,8 @@ def print_report(result: dict):
 
     if result["buy_score"] >= result["sell_score"]:
         conditions = result["buy_conditions"]
-        label = "BUY"
     else:
         conditions = result["sell_conditions"]
-        label = "SELL"
 
     for key, cond in conditions.items():
         icon = "✅" if cond["met"] else "❌"
@@ -251,7 +219,6 @@ def run_ta_agent():
     print("📊 Рахую індикатори...")
     df = calculate_indicators(df)
 
-    # Беремо останні дві свічки (остання і передостання для порівняння)
     last = df.iloc[-1]
     prev = df.iloc[-2]
 
